@@ -21,6 +21,8 @@ import { ref, get, getDatabase, set, child, onValue } from "firebase/database"
 import * as RNLocalize from "react-native-localize";
 import { database } from './utils/fire';
 import { darkStyle } from './styles/mapStyles';
+import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 
 const initialCords = {
   latitude: 54.6858,
@@ -62,13 +64,33 @@ const getDistance =  (lat1, lon1, lat2, lon2, unit) => {
 
   const [mapReady, setReady] = useState(false)
   useEffect(() => {
-   
+  
      const database1 = database
    const dbRef = ref(database1, `locations` )
-//   const auth = getAuth();
-// signInAnonymously(auth)
- const country = RNLocalize.getLocales()
- console.log(country)
+
+   const auth = getAuth();
+   onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // User is signed in, see docs for a list of available properties
+      // https://firebase.google.com/docs/reference/js/firebase.User
+      const uid = user.uid;
+      console.log('uid', uid)
+    } else {
+      signInAnonymously(auth)
+     .then(() => {
+       // Signed in..
+     })
+     .catch((error) => {
+       const errorCode = error.code;
+       const errorMessage = error.message;
+       // ...
+     });
+    }
+  });
+ 
+
+ const getLocales = RNLocalize.getLocales()
+ console.log(getLocales)
    onValue(dbRef, (snapshot) => {
 
     if(snapshot.exists()){
