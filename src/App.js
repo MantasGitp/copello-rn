@@ -59,6 +59,8 @@ const getDistance =  (lat1, lon1, lat2, lon2, unit) => {
   const [markers, setMarkers] = React.useState([]);
   const [currentLoc, setCurrentLoc] = useState(null);
   const [locations, setLocations] = useState(null)
+
+  const [mapReady, setReady] = useState(false)
   useEffect(() => {
    
      const database1 = database
@@ -119,14 +121,14 @@ const getDistance =  (lat1, lon1, lat2, lon2, unit) => {
   },[])
 
   useEffect(()=>{
-  if(currentLoc && markers.length<1){
+  if(currentLoc && markers?.length>0 && mapReady && _map){
     const payload = {
       ...initialCords,
-      ...currentLoc
+      ...markers[0]
     }
     _map?.current?.animateToRegion(payload, 1.3 * 1000);
   }
-},[currentLoc, markers])
+},[currentLoc, markers, mapReady, _map?.current])
 
   const requestPermission = async () => {
     if (Platform.OS == 'ios') {
@@ -160,14 +162,24 @@ const getDistance =  (lat1, lon1, lat2, lon2, unit) => {
 
 
   const onMapReady = () => {
+    setReady(true)
     if(!markers.length) return;
-    setTimeout(()=>{
-         _map.current.animateToRegion({
-           ...(markers[0] ? markers[0].coordinate : initialRegion),
-           latitudeDelta: initialRegion.latitudeDelta,
-           longitudeDelta: initialRegion.longitudeDelta,
-         });
-    },10)
+
+    if(markers?.length>0){
+      const payload = {
+        ...initialCords,
+        ...markers[0]
+      }
+      _map?.current?.animateToRegion(payload, 1.3 * 1000);
+      return
+    }
+   
+        //  _map.current.animateToRegion({
+        //    ...(markers[0] ? markers[0].coordinate : initialRegion),
+        //    latitudeDelta: initialRegion.latitudeDelta,
+        //    longitudeDelta: initialRegion.longitudeDelta,
+        //  });
+ 
   }
 
   const onMarkerPress = ({_targetInst : { return : { key : markerID} }}) => {
@@ -244,8 +256,9 @@ const getDistance =  (lat1, lon1, lat2, lon2, unit) => {
     <View style={styles.container}>
       <MapView
         ref={_map}
-        onMapReady={onMapReady}
+     
         initialRegion={initialRegion}
+        onMapReady={onMapReady}
         showsUserLocation={true}
         followsUserLocation={false}
         showsMyLocationButton={true}
